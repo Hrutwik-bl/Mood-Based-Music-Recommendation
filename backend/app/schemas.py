@@ -26,7 +26,11 @@ class TokenData(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    is_active: bool
     created_at: datetime
+    last_login: Optional[datetime]
 
     class Config:
         from_attributes = True
@@ -77,3 +81,45 @@ class ArtistResponse(BaseModel):
 class LanguageResponse(BaseModel):
     language: str
     song_count: int
+
+
+class UserPreferencesSchema(BaseModel):
+    preferred_languages: Optional[List[str]] = None
+    preferred_genres: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserPreferencesResponse(BaseModel):
+    id: int
+    user_id: int
+    preferred_languages: Optional[List[str]]
+    preferred_genres: Optional[List[str]]
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LikedSongResponse(BaseModel):
+    id: int
+    user_id: int
+    song_id: int
+    liked_at: datetime
+    song: Optional[SongResponse] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RecommendationHistoryResponse(BaseModel):
+    id: int
+    user_id: int
+    moods_queried: List[str]
+    filters_applied: Optional[dict] = None
+    results_count: Optional[int]
+    query_timestamp: datetime
+
+    class Config:
+        from_attributes = True

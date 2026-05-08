@@ -1,47 +1,71 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import api from '../../api/client';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signup, error } = useAuth();
+  const [displayError, setDisplayError] = useState('');
+  const [displaySuccess, setDisplaySuccess] = useState('');
   const navigate = useNavigate();
-  const [validationError, setValidationError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setValidationError('');
+    setDisplayError('');
+    setDisplaySuccess('');
+
+    if (!email || !password || !confirmPassword) {
+      setDisplayError('⚠️ Please fill in all fields');
+      return;
+    }
 
     if (password !== confirmPassword) {
-      setValidationError('Passwords do not match');
+      setDisplayError('❌ Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      setValidationError('Password must be at least 6 characters');
+      setDisplayError('⚠️ Password must be at least 6 characters');
       return;
     }
 
     setIsLoading(true);
-    const result = await signup(email, password);
-    setIsLoading(false);
+    try {
+      const response = await api.post('/auth/signup', { email, password });
+      setIsLoading(false);
 
-    if (result.success) {
-      navigate('/');
+      // Show success message but don't auto-login
+      setDisplaySuccess('✅ Account created! Now you can login.');
+
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (err) {
+      setIsLoading(false);
+      const message = err.response?.data?.detail || '❌ Signup failed. Please try again.';
+      setDisplayError(message);
+      setTimeout(() => setDisplayError(''), 5000);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Music Vibe</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">Music Vibe</h1>
+        <p className="text-gray-600 text-center mb-6">Create your account</p>
 
-        {(error || validationError) && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error || validationError}
+        {displayError && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-4">
+            <p className="font-semibold text-lg">{displayError}</p>
+          </div>
+        )}
+
+        {displaySuccess && (
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded mb-4">
+            <p className="font-semibold text-lg">{displaySuccess}</p>
           </div>
         )}
 
@@ -68,6 +92,7 @@ export default function Signup() {
               placeholder="••••••••"
               required
             />
+            <p className="text-xs text-gray-500 mt-1">At least 6 characters</p>
           </div>
 
           <div className="mb-6">
@@ -91,11 +116,13 @@ export default function Signup() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-purple-500 font-semibold hover:underline">
-            Log in
-          </Link>
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-purple-500 font-semibold hover:underline">
+              Log in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

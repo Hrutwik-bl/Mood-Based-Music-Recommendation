@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Table, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -18,9 +18,16 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
 
     recommendations = relationship("UserRecommendation", back_populates="user", cascade="all, delete-orphan")
+    preferences = relationship("UserPreferences", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    liked_songs = relationship("LikedSongs", back_populates="user", cascade="all, delete-orphan")
+    recommendation_history = relationship("RecommendationHistory", back_populates="user", cascade="all, delete-orphan")
 
 
 class SpotifySong(Base):
@@ -71,3 +78,40 @@ class MoodMapping(Base):
     target_valence = Column(Float, default=0.5)
     target_acousticness = Column(Float, default=0.5)
     target_tempo = Column(Float, default=100.0)
+
+
+class UserPreferences(Base):
+    __tablename__ = "user_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
+    preferred_languages = Column(Text, nullable=True)  # JSON array of language codes
+    preferred_genres = Column(Text, nullable=True)  # JSON array of genres
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="preferences")
+
+
+class LikedSongs(Base):
+    __tablename__ = "liked_songs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    song_id = Column(Integer, ForeignKey("spotify_song.id"), nullable=False)
+    liked_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="liked_songs")
+    song = relationship("SpotifySong")
+
+
+class RecommendationHistory(Base):
+    __tablename__ = "recommendation_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    moods_queried = Column(Text, nullable=False)  # JSON array of moods
+    filters_applied = Column(Text, nullable=True)  # JSON object with language, artist filters
+    results_count = Column(Integer, nullable=True)
+    query_timestamp = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="recommendation_history")

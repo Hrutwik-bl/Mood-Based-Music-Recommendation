@@ -8,6 +8,27 @@ from app.utils import get_current_user
 
 router = APIRouter()
 
+# Language code to full name mapping
+LANGUAGE_MAP = {
+    "en": "English",
+    "kn": "Kannada",
+    "hi": "Hindi",
+    "te": "Telugu",
+    "ta": "Tamil",
+    "ml": "Malayalam",
+    "gu": "Gujarati",
+    "or": "Odia",
+    "ne": "Nepali",
+    "ur": "Urdu",
+    "kok": "Konkani",
+    "bn": "Bengali",
+    "pa": "Punjabi",
+    "sa": "Sanskrit",
+    "mr": "Marathi",
+    "fr": "French",
+    "es": "Spanish",
+}
+
 # Default moods
 DEFAULT_MOODS = [
     {"mood": "happy", "description": "Uplifting and joyful music"},
@@ -32,15 +53,17 @@ def get_languages(current_user: User = Depends(get_current_user), db: Session = 
     languages = db.query(
         SpotifySong.language,
         func.count(SpotifySong.id).label("song_count")
-    ).group_by(SpotifySong.language).all()
+    ).group_by(SpotifySong.language).order_by(SpotifySong.language).all()
 
     if not languages:
         return []
 
-    return [
-        LanguageResponse(language=lang[0] or "Unknown", song_count=lang[1])
-        for lang in languages
-    ]
+    result = []
+    for lang_code, song_count in languages:
+        lang_name = LANGUAGE_MAP.get(lang_code, lang_code)
+        result.append(LanguageResponse(language=lang_name, song_count=song_count))
+
+    return sorted(result, key=lambda x: x.language)
 
 
 @router.get("/artists", response_model=list[ArtistResponse])

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from app.database import init_db
-from app.routes import auth, recommend, metadata
+from app.routes import auth, recommend, metadata, profile
 
 load_dotenv()
 
@@ -21,9 +21,9 @@ app = FastAPI(
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"],
+    allow_origins=[frontend_url, "http://localhost:3000", "127.0.0.1:5173", "127.0.0.1:3000"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -43,9 +43,10 @@ def health_check():
 
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(recommend.router, prefix="/api/recommend", tags=["Recommendations"])
-app.include_router(metadata.router, prefix="/api/metadata", tags=["Metadata"])
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(recommend.router, prefix="/recommend", tags=["Recommendations"])
+app.include_router(metadata.router, prefix="/metadata", tags=["Metadata"])
+app.include_router(profile.router, prefix="/profile", tags=["Profile"])
 
 
 @app.exception_handler(Exception)

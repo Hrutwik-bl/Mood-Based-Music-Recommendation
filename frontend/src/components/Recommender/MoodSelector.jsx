@@ -112,7 +112,7 @@ export default function MoodSelector({ onRecommendations, isLoading, setIsLoadin
             <option value="">All Languages</option>
             {languages.map((lang) => (
               <option key={lang.language} value={lang.language}>
-                {lang.language} ({lang.song_count})
+                {lang.language}
               </option>
             ))}
           </select>

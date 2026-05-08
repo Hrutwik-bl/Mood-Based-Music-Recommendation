@@ -49,6 +49,7 @@ export const useAuth = () => {
   const logout = () => {
     localStorage.removeItem('access_token');
     setUser(null);
+    window.location.href = '/';
   };
 
   return {

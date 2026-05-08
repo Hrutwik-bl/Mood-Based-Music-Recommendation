@@ -10,6 +10,7 @@ from app.models import SpotifySong, MoodMapping
 
 MODEL_PATH = "ml_model.pkl"
 SCALER_PATH = "scaler.pkl"
+METADATA_PATH = "model_metadata.pkl"
 
 
 class MusicRecommendationModel:
@@ -22,17 +23,23 @@ class MusicRecommendationModel:
 
     def load_or_create_model(self):
         """Load model from disk or create a new one."""
-        if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH):
+        if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH) and os.path.exists(METADATA_PATH):
             try:
                 with open(MODEL_PATH, "rb") as f:
                     self.model = pickle.load(f)
                 with open(SCALER_PATH, "rb") as f:
                     self.scaler = pickle.load(f)
+                with open(METADATA_PATH, "rb") as f:
+                    metadata = pickle.load(f)
+                    self.song_ids = metadata.get("song_ids")
+                    self.features = metadata.get("features")
                 print("Loaded pretrained model from disk")
             except Exception as e:
                 print(f"Error loading model: {e}")
                 self.model = None
                 self.scaler = None
+                self.song_ids = None
+                self.features = None
         else:
             print("No pretrained model found. Will train after Spotify data is loaded.")
 
@@ -81,6 +88,11 @@ class MusicRecommendationModel:
             pickle.dump(self.model, f)
         with open(SCALER_PATH, "wb") as f:
             pickle.dump(self.scaler, f)
+        with open(METADATA_PATH, "wb") as f:
+            pickle.dump({
+                "song_ids": self.song_ids,
+                "features": self.features
+            }, f)
 
         print(f"Model trained on {len(songs)} songs")
 
